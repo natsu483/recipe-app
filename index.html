@@ -317,6 +317,23 @@ async function fetchRecipe(){
     if(data.ingredients?.length){ingredients=data.ingredients.map(i=>({name:i.name||'',amount:i.amount||''}));reIng();}
     if(data.steps?.length){steps=data.steps.filter(s=>s);reStep();}
     if(data.tags?.length){tags=data.tags;reTag();}
+    // 画像をBase64で受け取って圧縮してセット
+    if(data.imageBase64){
+      await new Promise(resolve=>{
+        const img=new Image();
+        img.onload=()=>{
+          const MAX=1200;let w=img.width,h=img.height;
+          if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+          const c=document.createElement('canvas');c.width=w;c.height=h;
+          c.getContext('2d').drawImage(img,0,0,w,h);
+          currentPhoto=c.toDataURL('image/jpeg',0.88);
+          const el=document.getElementById('photo-area');if(el)el.innerHTML=photoArea();
+          resolve();
+        };
+        img.onerror=resolve;
+        img.src=data.imageBase64;
+      });
+    }
     document.getElementById('fetch-status').innerHTML=`<div class="fetch-success">${S.sparkle} 取得しました！確認して保存してください。</div>`;
   }catch(e){
     document.getElementById('fetch-status').innerHTML=`<div class="fetch-error">取得失敗: ${e.message}</div>`;
