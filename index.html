@@ -101,8 +101,8 @@ input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;h
 .empty-sub{font-size:12px;color:var(--warm3);margin-top:6px;line-height:1.7;}
 .see-all{width:100%;background:none;border:1px solid var(--border2);border-radius:var(--radius);padding:11px;font-size:13px;cursor:pointer;color:var(--warm2);font-family:var(--font);font-weight:700;margin-top:4px;}
 .see-all:active{background:var(--terra-xlt);}
-.search-wrap{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:10px;}.search-wrap:focus-within{border-color:var(--border);}
-.search-wrap input{flex:1;background:transparent;border:none;outline:none;font-size:14px;padding:11px 0;color:var(--mocha);font-family:var(--font);}
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--linen);border:none;border-radius:0;padding:0 12px;margin-bottom:10px;border-bottom:1px solid var(--border);}
+.search-wrap input{flex:1;background:transparent;border:none!important;border-radius:0!important;outline:none!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none;font-size:14px;padding:11px 0;color:var(--mocha);font-family:var(--font);-webkit-tap-highlight-color:transparent;}
 .cat-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;}
 .cat-scroll::-webkit-scrollbar{display:none;}
 .cat-chip{border:1px solid var(--border);background:var(--card);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--warm2);white-space:nowrap;font-family:var(--font);display:flex;align-items:center;gap:5px;}
@@ -334,7 +334,7 @@ async function fetchRecipe(){
         img.src=data.imageBase64;
       });
     }
-    document.getElementById('fetch-status').innerHTML=`<div class="fetch-success">${S.sparkle} 取得しました！確認して保存してください。</div>`;
+    document.getElementById('fetch-status').innerHTML=`<div class="fetch-success">取得しました！確認して保存してください。</div>`;
   }catch(e){
     document.getElementById('fetch-status').innerHTML=`<div class="fetch-error">取得失敗: ${e.message}</div>`;
   }
@@ -387,7 +387,7 @@ function renderList(){
       <button class="search-tab ${searchTab==='fav'?'active':''}" onclick="setTab('fav')">お気に入り</button>
     </div>
     <div class="search-wrap"><span style="color:var(--warm3);display:flex;">${S.search}</span>
-      <input type="text" id="q" placeholder="${searchTab==='ingredient'?'例: 鶏肉、卵、トマト…':searchTab==='fav'?'お気に入りを検索…':'名前・タグで検索…'}" oninput="flt()" autocomplete="off">
+      <input type="text" id="q" placeholder="${searchTab==='ingredient'?'例: 鶏肉、卵、トマト…':searchTab==='fav'?'お気に入りを検索…':'名前・タグで検索…'}" oninput="flt()" autocomplete="off" style="-webkit-tap-highlight-color:transparent;" onfocus="this.closest('.search-wrap').setAttribute('style','border:1px solid var(--border)!important;outline:none!important;box-shadow:none!important;-webkit-appearance:none!important;')" onblur="this.closest('.search-wrap').removeAttribute('style')">
     </div>
     ${searchTab!=='ingredient'?`<div class="cat-scroll">
       <button class="cat-chip ${filterCat==='all'?'active':''}" onclick="setCat('all')">すべて</button>
@@ -543,7 +543,7 @@ function renderForm(isEdit){
       <div class="url-fetch-label">${S.sparkle} URLから自動取得（AWS Bedrock）</div>
       <div class="url-fetch-row">
         <input type="url" id="fetch-url" placeholder="レシピのURLを貼り付ける…">
-        <button class="fetch-btn" id="fetch-btn" onclick="fetchRecipe()">${S.sparkle} 取得</button>
+        <button class="fetch-btn" id="fetch-btn" onclick="fetchRecipe()">取得</button>
       </div>
       <div id="fetch-status"></div>
     </div>`:''}
