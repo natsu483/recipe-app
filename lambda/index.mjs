@@ -1,16 +1,8 @@
-/**
- * レシピ取得 Lambda関数
- * - URLのページを取得してテキストを抽出
- * - Amazon Bedrock（Claude）でレシピ情報をJSON化
- * - API Gatewayから呼び出される
- */
-
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-const client = new BedrockRuntimeClient({ region: "us-east-1" }); // Bedrockは東京未対応のためバージニア北部
+const client = new BedrockRuntimeClient({ region: "ap-northeast-1" });
 
 export const handler = async (event) => {
-  // CORS対応（プリフライトリクエスト）
   if (event.httpMethod === "OPTIONS") {
     return corsResponse(200, {});
   }
@@ -25,6 +17,7 @@ export const handler = async (event) => {
 
     // 1. URLのHTMLを取得
     let pageText = "";
+    let imageUrl = null;
     try {
       const res = await fetch(url, {
         headers: {
@@ -34,7 +27,14 @@ export const handler = async (event) => {
         signal: AbortSignal.timeout(8000),
       });
       const html = await res.text();
-      // HTMLタグを除去してテキストのみ抽出（最大8000文字）
+
+      // og:image からメイン画像URLを抽出
+      const ogImage =
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+      if (ogImage) imageUrl = ogImage[1];
+
+      // テキスト抽出
       pageText = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -46,7 +46,7 @@ export const handler = async (event) => {
       return corsResponse(400, { error: "URLの取得に失敗しました: " + e.message });
     }
 
-    // 2. Bedrockでレシピ情報を抽出
+    // 2. Nova Liteでレシピ情報を抽出
     const prompt = `以下のレシピページのテキストからレシピ情報を抽出してJSONのみを返してください。前置きや説明は不要です。
 
 テキスト:
@@ -66,27 +66,47 @@ ${pageText}
 }`;
 
     const command = new InvokeModelCommand({
-      modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+      modelId: "amazon.nova-lite-v1:0",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        max_tokens: 2000,
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: [{ text: prompt }] }],
+        inferenceConfig: { max_new_tokens: 2000 }
       }),
     });
 
     const bedrockRes = await client.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(bedrockRes.body));
-    const text = responseBody.content[0].text;
+    const text = responseBody.output.message.content[0].text;
 
-    // JSONを抽出
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) {
       return corsResponse(500, { error: "レシピ情報を解析できませんでした" });
     }
 
     const recipe = JSON.parse(match[0]);
+
+    // 画像をLambdaで取得してBase64で返す（CORSを回避）
+    if (imageUrl) {
+      try {
+        const imgRes = await fetch(imageUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+            "Referer": url,
+          },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (imgRes.ok) {
+          const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+          const buffer = await imgRes.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString("base64");
+          recipe.imageBase64 = `data:${contentType};base64,${base64}`;
+        }
+      } catch (e) {
+        // 画像取得失敗は無視
+      }
+    }
+
     return corsResponse(200, recipe);
 
   } catch (e) {
