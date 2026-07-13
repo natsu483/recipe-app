@@ -106,12 +106,12 @@ input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;h
 .cat-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;}
 .cat-scroll::-webkit-scrollbar{display:none;}
 .cat-chip{border:1px solid var(--border);background:var(--card);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--warm2);white-space:nowrap;font-family:var(--font);display:flex;align-items:center;gap:5px;}
-.cat-chip.active{background:var(--terra);color:#fff;border-color:var(--terra);}
+.cat-chip.active{background:var(--terra);color:#fff;border-color:var(--terra);font-weight:700;transform:scale(1.05);box-shadow:0 2px 8px rgba(166,124,107,0.35);}
 .form-section{margin-bottom:16px;}
 .form-label{font-size:12px;font-weight:700;color:var(--warm2);margin-bottom:5px;display:block;}
 .form-label .req{color:var(--terra);}
 input[type=text],input[type=url],input[type=number],input[type=password],select,textarea{width:100%;padding:11px 12px;font-size:14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--mocha);outline:none;font-family:var(--font);appearance:none;-webkit-appearance:none;}
-input:focus,select:focus,textarea:focus{border-color:var(--terra);}
+input:focus,select:focus,textarea:focus{border-color:var(--border);outline:none;}button:focus{outline:none;}
 textarea{resize:vertical;min-height:72px;line-height:1.5;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .dyn-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
@@ -390,14 +390,26 @@ function renderList(){
       <input type="text" id="q" placeholder="${searchTab==='ingredient'?'例: 鶏肉、卵、トマト…':searchTab==='fav'?'お気に入りを検索…':'名前・タグで検索…'}" oninput="flt()" autocomplete="off" style="-webkit-tap-highlight-color:transparent;" onfocus="this.closest('.search-wrap').setAttribute('style','border:1px solid var(--border)!important;outline:none!important;box-shadow:none!important;-webkit-appearance:none!important;')" onblur="this.closest('.search-wrap').removeAttribute('style')">
     </div>
     ${searchTab!=='ingredient'?`<div class="cat-scroll">
-      <button class="cat-chip ${filterCat==='all'?'active':''}" onclick="setCat('all')">すべて</button>
-      ${CATS.map(c=>`<button class="cat-chip ${filterCat===c?'active':''}" onclick="setCat('${c}')">${S[c]}${c}</button>`).join('')}
+      <button class="cat-chip ${filterCat==='all'?'active':''}" data-cat="all" onclick="setCat('all')">すべて</button>
+      ${CATS.map(c=>`<button class="cat-chip ${filterCat===c?'active':''}" data-cat="${c}" onclick="setCat('${c}')">${S[c]}${c}</button>`).join('')}
     </div>`:''}
     <div id="list-items">${renderItems(getFiltered(''))}</div>
   </div>`;
 }
 function setTab(t){searchTab=t;filterCat='all';render();}
-function setCat(c){filterCat=c;flt();}
+function setCat(c){
+  filterCat=c;
+  // チップのactiveクラスだけ更新
+  document.querySelectorAll('.cat-chip').forEach(el=>{
+    const cat=el.getAttribute('data-cat');
+    if(cat===c)el.classList.add('active');
+    else el.classList.remove('active');
+  });
+  // リストだけ更新
+  const q=(document.getElementById('q')?.value||'').toLowerCase();
+  const el=document.getElementById('list-items');
+  if(el)el.innerHTML=renderItems(getFiltered(q));
+}
 function getFiltered(q){
   let list=recipes;
   if(searchTab==='fav')list=list.filter(r=>r.fav);
@@ -599,7 +611,28 @@ function reTag(){document.getElementById('tags-display').innerHTML=tags.map((t,i
 function collect(){return{name:document.getElementById('f-name')?.value?.trim()||'',description:document.getElementById('f-desc')?.value?.trim()||'',category:document.getElementById('f-cat')?.value||'その他',difficulty:parseInt(document.getElementById('f-diff')?.value)||2,time:parseInt(document.getElementById('f-time')?.value)||null,servings:parseInt(document.getElementById('f-serv')?.value)||null,ingredients:[...ingredients.filter(i=>i.name)],steps:[...steps.filter(s=>s)],tags:[...tags],url:document.getElementById('f-url')?.value?.trim()||'',memo:document.getElementById('f-memo')?.value?.trim()||'',photo:currentPhoto||null};}
 async function saveRecipe(){const d=collect();if(!d.name){document.getElementById('f-name')?.focus();return;}d.id=Date.now();d.saved=new Date().toLocaleDateString('ja-JP');d.fav=false;await dbPut(d);recipes.unshift(d);resetForm();nav('home');}
 async function updateRecipe(){const d=collect();if(!d.name){document.getElementById('f-name')?.focus();return;}const i=recipes.findIndex(r=>r.id===editId);if(i>-1){d.id=editId;d.saved=recipes[i].saved;d.fav=recipes[i].fav||false;recipes[i]=d;}await dbPut(d);resetForm();nav('detail',true);render();}
-async function delRecipe(id){if(!confirm('このレシピを削除しますか？'))return;await dbDelete(id);recipes=recipes.filter(r=>r.id!==id);goBack();}
+async function delRecipe(id){
+  const ok=await showConfirm('このレシピを削除しますか？');
+  if(!ok)return;
+  await dbDelete(id);
+  recipes=recipes.filter(r=>r.id!==id);
+  goBack();
+}
+function showConfirm(msg){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px 20px;width:280px;text-align:center;font-family:var(--font);">
+      <div style="font-size:15px;color:#3C2F29;margin-bottom:20px;">${msg}</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="this.closest('[style*=fixed]').remove();window._confirmResolve(false)" style="flex:1;padding:11px;border:1px solid #E2D6CF;border-radius:10px;background:none;font-size:14px;cursor:pointer;font-family:var(--font);color:#7A6255;">キャンセル</button>
+        <button onclick="this.closest('[style*=fixed]').remove();window._confirmResolve(true)" style="flex:1;padding:11px;border:none;border-radius:10px;background:#A67C6B;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">削除</button>
+      </div>
+    </div>`;
+    window._confirmResolve=resolve;
+    document.body.appendChild(overlay);
+  });
+}
 function goBack(){
   document.getElementById('bottom-nav').style.display='flex';
   filterCat='all';nav('home');
