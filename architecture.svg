@@ -1,0 +1,127 @@
+<svg width="100%" viewBox="0 0 680 520" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>レシピ帳アプリ AWSアーキテクチャ図</title>
+<desc>iPhone → CloudFront → S3、iPhone → API Gateway → Lambda → Bedrockの構成図</desc>
+
+<style>
+  text { font-family: system-ui, -apple-system, sans-serif; fill: #3d3d3a; }
+  .th { font-size: 14px; font-weight: 600; }
+  .ts { font-size: 12px; font-weight: 400; fill: #5f5e5a; }
+  .arr { stroke: #888; stroke-width: 1.5; fill: none; }
+  .leader { stroke: #b4b2a9; stroke-width: 0.5; stroke-dasharray: 4 3; fill: none; }
+  .box-gray { fill: #f1efe8; stroke: #b4b2a9; }
+  .box-blue { fill: #e6f1fb; stroke: #85b7eb; }
+  .box-teal { fill: #e1f5ee; stroke: #5dcaa5; }
+  .box-amber { fill: #faeeda; stroke: #ef9f27; }
+  .text-blue { fill: #0c447c; }
+  .text-teal { fill: #085041; }
+  .text-amber { fill: #633806; }
+  .text-gray { fill: #444441; }
+  .text-sub-blue { fill: #185fa5; }
+  .text-sub-teal { fill: #0f6e56; }
+  .text-sub-gray { fill: #5f5e5a; }
+  .text-sub-amber { fill: #854f0b; }
+</style>
+
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#185fa5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="arrow-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#0f6e56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="arrow-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<!-- iPhone -->
+<rect x="30" y="180" width="90" height="100" rx="12" class="box-gray" stroke-width="0.5"/>
+<rect x="42" y="192" width="66" height="76" rx="4" fill="none" stroke="#b4b2a9" stroke-width="0.5"/>
+<text class="th text-gray" x="75" y="225" text-anchor="middle" dominant-baseline="central">iPhone</text>
+<text class="ts text-sub-gray" x="75" y="245" text-anchor="middle" dominant-baseline="central">PWA</text>
+
+<!-- 静的ファイル配信ラベル -->
+<text class="ts text-sub-blue" x="220" y="168" text-anchor="middle">静的ファイル配信</text>
+
+<!-- iPhone → CloudFront -->
+<line x1="120" y1="210" x2="183" y2="210" stroke="#185fa5" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+
+<!-- CloudFront -->
+<rect x="185" y="185" width="110" height="52" rx="8" class="box-blue" stroke-width="0.5"/>
+<text class="th text-blue" x="240" y="205" text-anchor="middle" dominant-baseline="central">CloudFront</text>
+<text class="ts text-sub-blue" x="240" y="223" text-anchor="middle" dominant-baseline="central">CDN・HTTPS</text>
+
+<!-- CloudFront → S3 -->
+<line x1="295" y1="211" x2="353" y2="211" stroke="#185fa5" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+
+<!-- S3 -->
+<rect x="355" y="185" width="110" height="52" rx="8" class="box-blue" stroke-width="0.5"/>
+<text class="th text-blue" x="410" y="205" text-anchor="middle" dominant-baseline="central">S3</text>
+<text class="ts text-sub-blue" x="410" y="223" text-anchor="middle" dominant-baseline="central">index.html 他</text>
+
+<!-- GitHub -->
+<rect x="510" y="185" width="110" height="52" rx="8" class="box-gray" stroke-width="0.5"/>
+<text class="th text-gray" x="565" y="205" text-anchor="middle" dominant-baseline="central">GitHub</text>
+<text class="ts text-sub-gray" x="565" y="223" text-anchor="middle" dominant-baseline="central">ソース管理</text>
+
+<!-- GitHub → S3 (dashed) -->
+<line x1="510" y1="211" x2="467" y2="211" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow-gray)"/>
+<text class="ts text-sub-gray" x="490" y="200" text-anchor="middle">手動</text>
+
+<!-- 区切り線 -->
+<line x1="30" y1="260" x2="640" y2="260" stroke="#d3d1c7" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text class="ts text-sub-gray" x="340" y="278" text-anchor="middle">AIレシピ自動取得フロー</text>
+
+<!-- iPhone → API Gateway -->
+<line x1="120" y1="250" x2="183" y2="315" stroke="#0f6e56" stroke-width="1.5" fill="none" marker-end="url(#arrow-teal)"/>
+
+<!-- API Gateway -->
+<rect x="185" y="295" width="110" height="52" rx="8" class="box-teal" stroke-width="0.5"/>
+<text class="th text-teal" x="240" y="315" text-anchor="middle" dominant-baseline="central">API Gateway</text>
+<text class="ts text-sub-teal" x="240" y="333" text-anchor="middle" dominant-baseline="central">POST /recipe</text>
+
+<!-- API Gateway → Lambda -->
+<line x1="295" y1="321" x2="353" y2="321" stroke="#0f6e56" stroke-width="1.5" fill="none" marker-end="url(#arrow-teal)"/>
+
+<!-- Lambda -->
+<rect x="355" y="295" width="110" height="52" rx="8" class="box-teal" stroke-width="0.5"/>
+<text class="th text-teal" x="410" y="315" text-anchor="middle" dominant-baseline="central">Lambda</text>
+<text class="ts text-sub-teal" x="410" y="333" text-anchor="middle" dominant-baseline="central">Node.js 20</text>
+
+<!-- Lambda → Bedrock -->
+<line x1="465" y1="321" x2="508" y2="321" stroke="#0f6e56" stroke-width="1.5" fill="none" marker-end="url(#arrow-teal)"/>
+
+<!-- Bedrock -->
+<rect x="510" y="295" width="110" height="52" rx="8" class="box-teal" stroke-width="0.5"/>
+<text class="th text-teal" x="565" y="315" text-anchor="middle" dominant-baseline="central">Bedrock</text>
+<text class="ts text-sub-teal" x="565" y="333" text-anchor="middle" dominant-baseline="central">Nova Lite</text>
+
+<!-- 戻りの矢印 -->
+<path d="M240 347 L240 400 L75 400 L75 280" fill="none" stroke="#0f6e56" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arrow-teal)"/>
+<text class="ts text-sub-teal" x="158" y="415" text-anchor="middle">レシピJSON を返す</text>
+
+<!-- IAM -->
+<rect x="355" y="390" width="265" height="38" rx="8" class="box-amber" stroke-width="0.5"/>
+<text class="th text-amber" x="418" y="409" text-anchor="middle" dominant-baseline="central">IAM</text>
+<text class="ts text-sub-amber" x="548" y="409" text-anchor="middle" dominant-baseline="central">bedrock-invoke-policy</text>
+<line x1="410" y1="390" x2="410" y2="347" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="3 3" fill="none"/>
+<line x1="565" y1="390" x2="565" y2="347" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="3 3" fill="none"/>
+
+<!-- IndexedDB -->
+<rect x="30" y="435" width="110" height="52" rx="8" class="box-gray" stroke-width="0.5"/>
+<text class="th text-gray" x="85" y="455" text-anchor="middle" dominant-baseline="central">IndexedDB</text>
+<text class="ts text-sub-gray" x="85" y="473" text-anchor="middle" dominant-baseline="central">端末内保存</text>
+<line x1="75" y1="435" x2="75" y2="400" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="3 3" fill="none"/>
+
+<!-- 凡例 -->
+<line x1="30" y1="502" x2="55" y2="502" stroke="#185fa5" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+<text class="ts text-sub-gray" x="60" y="505">静的配信</text>
+<line x1="140" y1="502" x2="165" y2="502" stroke="#0f6e56" stroke-width="1.5" fill="none" marker-end="url(#arrow-teal)"/>
+<text class="ts text-sub-gray" x="170" y="505">AIフロー</text>
+<line x1="240" y1="502" x2="265" y2="502" stroke="#b4b2a9" stroke-width="0.5" stroke-dasharray="4 3" fill="none"/>
+<text class="ts text-sub-gray" x="270" y="505">依存関係</text>
+
+</svg>
